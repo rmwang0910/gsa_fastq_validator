@@ -159,6 +159,25 @@ class GSAReportGenerator:
         lines.append("=" * 70)
         lines.append("GSA就绪状态: " + ("✅ 是" if report.is_valid else "❌ 否"))
         lines.append("=" * 70)
-        
+
         return "\n".join(lines)
+
+    @staticmethod
+    def generate_simple_json(report: ValidationReport) -> str:
+        """
+        生成简洁的JSON状态输出
+
+        Args:
+            report: ValidationReport对象
+
+        Returns:
+            JSON字符串
+        """
+        if report.is_valid:
+            return json.dumps({"status": 200}, ensure_ascii=False)
+        else:
+            errors = report.get_errors()
+            error_messages = [e.message for e in errors]
+            info = "; ".join(error_messages) if error_messages else "校验失败"
+            return json.dumps({"status": 500, "info": info}, ensure_ascii=False)
 

@@ -579,3 +579,8 @@ class GSAFastQValidator:
         """获取所有警告"""
         return [c for c in self.checks if c.severity == ValidationSeverity.WARNING and c.status == "failed"]
 
+
+
+
+
+
