@@ -28,43 +28,41 @@ from report_generator import GSAReportGenerator
 
 def print_report(report: ValidationReport, verbose: bool = False):
     """打印校验报告"""
-    print("\n" + "="*70)
-    print(f"文件: {report.file_path}")
-    print("="*70)
-    
-    # 打印汇总
-    print(f"\n{report.summary}\n")
-    
-    # 打印错误
-    errors = report.get_errors()
-    if errors:
-        print("❌ 错误:")
-        for i, error in enumerate(errors, 1):
-            print(f"  {i}. [{error.check_type}] {error.message}")
-            if error.details and verbose:
-                for key, value in error.details.items():
-                    print(f"     {key}: {value}")
-            if error.recommendation:
-                print(f"     建议: {error.recommendation}")
-        print()
-    
-    # 打印警告
-    warnings = report.get_warnings()
-    if warnings:
-        print("⚠ 警告:")
-        for i, warning in enumerate(warnings, 1):
-            print(f"  {i}. [{warning.check_type}] {warning.message}")
-            if warning.recommendation:
-                print(f"     建议: {warning.recommendation}")
-        print()
-    
-    # 打印通过的检查
-    passed = [c for c in report.checks if c.status == "passed"]
-    if passed and verbose:
-        print("✓ 通过的检查:")
-        for check in passed:
-            print(f"  - [{check.check_type}] ✓ {check.message}")
-        print()
+    if verbose:
+        print("\n" + "="*70)
+        print(f"文件: {report.file_path}")
+        print("="*70)
+        print(f"\n{report.summary}\n")
+
+        errors = report.get_errors()
+        if errors:
+            print("❌ 错误:")
+            for i, error in enumerate(errors, 1):
+                print(f"  {i}. [{error.check_type}] {error.message}")
+                if error.details:
+                    for key, value in error.details.items():
+                        print(f"     {key}: {value}")
+                if error.recommendation:
+                    print(f"     建议: {error.recommendation}")
+            print()
+
+        warnings = report.get_warnings()
+        if warnings:
+            print("⚠ 警告:")
+            for i, warning in enumerate(warnings, 1):
+                print(f"  {i}. [{warning.check_type}] {warning.message}")
+                if warning.recommendation:
+                    print(f"     建议: {warning.recommendation}")
+            print()
+
+        passed = [c for c in report.checks if c.status == "passed"]
+        if passed:
+            print("✓ 通过的检查:")
+            for check in passed:
+                print(f"  - [{check.check_type}] ✓ {check.message}")
+            print()
+    else:
+        print(GSAReportGenerator.generate_simple_json(report))
 
 
 def validate_file(file_path: str, check_casava: bool = False, verbose: bool = False) -> ValidationReport:
