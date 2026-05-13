@@ -11,6 +11,7 @@ GSA FASTQ数据校验工具 - 主程序
 
 import os
 import sys
+import json
 import argparse
 from pathlib import Path
 from typing import List
@@ -24,6 +25,14 @@ from validator import GSAFastQValidator, ValidationReport
 from bam_validator import GSABAMValidator
 from md5_checker import MD5Checker
 from report_generator import GSAReportGenerator
+
+
+def print_error(message: str, verbose: bool = False):
+    """统一错误输出"""
+    if verbose:
+        print(f"❌ 错误: {message}")
+    else:
+        print(json.dumps({"status": 500, "info": message}, ensure_ascii=False))
 
 
 def print_report(report: ValidationReport, verbose: bool = False):
@@ -85,40 +94,43 @@ def batch_validate(directory: str, pattern: str = "*.fastq*", verbose: bool = Fa
     """批量校验目录中的文件"""
     dir_path = Path(directory)
     if not dir_path.is_dir():
-        print(f"❌ 错误: {directory} 不是有效的目录")
+        print_error(f"{directory} 不是有效的目录", verbose)
         return
-    
+
     # 查找匹配的文件
     files = list(dir_path.glob(pattern))
-    
+
     if not files:
-        print(f"❌ 在 {directory} 中未找到匹配 {pattern} 的文件")
+        print_error(f"在 {directory} 中未找到匹配 {pattern} 的文件", verbose)
         return
-    
-    print(f"找到 {len(files)} 个文件，开始批量校验...\n")
-    
+
+    if verbose:
+        print(f"找到 {len(files)} 个文件，开始批量校验...\n")
+
     results = []
     for file_path in files:
-        print(f"处理: {file_path.name}")
+        if verbose:
+            print(f"处理: {file_path.name}")
         try:
             report = validate_file(str(file_path), verbose=verbose)
             results.append((file_path, report))
         except Exception as e:
-            print(f"  ❌ 处理失败: {e}\n")
+            print_error(f"处理 {file_path.name} 失败: {e}", verbose)
             results.append((file_path, None))
-    
+
     # 汇总
-    print("\n" + "="*70)
-    print("批量校验结果汇总")
-    print("="*70)
-    
-    passed_count = sum(1 for _, r in results if r and r.is_valid)
-    failed_count = len(results) - passed_count
-    
-    print(f"总文件数: {len(results)}")
-    print(f"通过: {passed_count}")
-    print(f"失败: {failed_count}")
-    print("="*70)
+    if verbose:
+        print("\n" + "="*70)
+        print("批量校验结果汇总")
+        print("="*70)
+
+        passed_count = sum(1 for _, r in results if r and r.is_valid)
+        failed_count = len(results) - passed_count
+
+        print(f"总文件数: {len(results)}")
+        print(f"通过: {passed_count}")
+        print(f"失败: {failed_count}")
+        print("="*70)
 
 
 def main():
@@ -196,8 +208,8 @@ def main():
     
     # 单个文件处理
     if not os.path.exists(args.file):
-        print(f"❌ 错误: 文件不存在: {args.file}")
-        return
+        print_error(f"文件不存在: {args.file}", args.verbose)
+        sys.exit(1)
     
     # MD5 相关操作
     if args.generate_md5:
